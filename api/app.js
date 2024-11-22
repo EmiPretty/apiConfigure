@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const Todo = require('./todo');
 const authcontroller = require('./controller/authcontroller');
 const authJwt = require('./middlewares/authJwt');
-const { default: rateLimit } = require('express-rate-limit');
+const rateLimiter = require("./middlewares/rateLimiter");
 
 const app = express();
 app.use(express.json());

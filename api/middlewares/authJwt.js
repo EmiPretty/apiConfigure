@@ -2,54 +2,41 @@ const jwt = require("jsonwebtoken");
 const config = require("../config/key.js");
 const User = require("../models/user.js");
 
-verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const token = req.headers["x-access-token"];
-  if (!token) return res.status(403).send({ message: "No token provided!" });
-
-  jwt.verify(token, process.env.SECRET_KEY, async (err, decoded) => {
-    if (err) return res.status(401).send({ message: "Unauthorized!" });
-
-    req.user = await User.findById(decoded.id); // Ajouter les infos utilisateur à req.user
-    next();
-  });
-};
-
-verifyToken = (req, res, next) => {
-  let token = req.headers["x-access-token"];
-
   if (!token) {
     return res.status(403).send({ message: "No token provided!" });
   }
 
-  jwt.verify(token, config.secret, (err, decoded) => {
+  jwt.verify(token, process.env.SECRET_KEY || config.secret, async (err, decoded) => {
     if (err) {
-      return res.status(401).send({
-        message: "Unauthorized!",
-      });
+      return res.status(401).send({ message: "Unauthorized!" });
     }
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+    req.user = user;
     req.userId = decoded.id;
     next();
   });
 };
 
-isExist = async (req, res, next) => {
+const isExist = async (req, res, next) => {
   const user = await User.findById(req.userId);
   if (!user) {
-    res.status(403).send({ message: "User not found" });
-    return;
+    return res.status(403).send({ message: "User not found" });
   }
   next();
 };
 
-CheckUser = async (req, res, next) => {
+const CheckUser = async (req, res, next) => {
   const user = await User.findById(req.userId);
   if (!user) {
-    res.status(403).send({ message: "admin pas trouvé" });
-    return;
+    return res.status(403).send({ message: "admin pas trouvé" });
   }
   if (!user.isadmin) {
-    res.status(403).send({ message: "pas admin" });
-    return;
+    return res.status(403).send({ message: "pas admin" });
   }
   next();
 };
@@ -57,6 +44,7 @@ CheckUser = async (req, res, next) => {
 const authJwt = {
   verifyToken,
   isExist,
-  CheckUser
+  CheckUser,
 };
+
 module.exports = authJwt;
