@@ -35,7 +35,7 @@ app.post('/api/todos', [authJwt.verifyToken,authJwt.CheckUser],async (req, res) 
       res.status(500).send('Erreur lors de la création de la tâche');
     }
 });
-app.get('/api/todos/:id', [authJwt.verifyToken,authJwt.isExist,rateLimiter],async (req, res) => {
+app.get('/api/todos/:id', [authJwt.verifyToken,authJwt.isExist, rateLimiter],async (req, res) => {
     try {
         const todo = await Todo.findById(req.params.id);
         if (!todo) {
