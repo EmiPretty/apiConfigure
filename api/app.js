@@ -53,7 +53,7 @@ app.get('/api/todos/:id', [authJwt.verifyToken,authJwt.isExist, rateLimiter],asy
     }
     
 });
-app.put('/api/todos/:id',[authJwt.verifyToken,authJwt.CheckUser, rateLimit], async (req, res) => {
+app.put('/api/todos/:id',[authJwt.verifyToken,authJwt.CheckUser, rateLimiter], async (req, res) => {
     const todo = await Todo.findById(req.params.id);
     if (!todo) {
         return res.status(404).send('Tâche non trouvée');
