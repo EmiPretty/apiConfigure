@@ -3,6 +3,18 @@ const config = require("../config/key.js");
 const User = require("../models/user.js");
 
 verifyToken = (req, res, next) => {
+  const token = req.headers["x-access-token"];
+  if (!token) return res.status(403).send({ message: "No token provided!" });
+
+  jwt.verify(token, process.env.SECRET_KEY, async (err, decoded) => {
+    if (err) return res.status(401).send({ message: "Unauthorized!" });
+
+    req.user = await User.findById(decoded.id); // Ajouter les infos utilisateur à req.user
+    next();
+  });
+};
+
+verifyToken = (req, res, next) => {
   let token = req.headers["x-access-token"];
 
   if (!token) {
@@ -19,6 +31,7 @@ verifyToken = (req, res, next) => {
     next();
   });
 };
+
 isExist = async (req, res, next) => {
   const user = await User.findById(req.userId);
   if (!user) {

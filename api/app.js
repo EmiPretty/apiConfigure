@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const Todo = require('./todo');
 const authcontroller = require('./controller/authcontroller');
 const authJwt = require('./middlewares/authJwt');
+const { default: rateLimit } = require('express-rate-limit');
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,7 +35,7 @@ app.post('/api/todos', [authJwt.verifyToken,authJwt.CheckUser],async (req, res) 
       res.status(500).send('Erreur lors de la création de la tâche');
     }
 });
-app.get('/api/todos/:id', [authJwt.verifyToken,authJwt.isExist],async (req, res) => {
+app.get('/api/todos/:id', [authJwt.verifyToken,authJwt.isExist,rateLimiter],async (req, res) => {
     try {
         const todo = await Todo.findById(req.params.id);
         if (!todo) {
@@ -42,7 +44,7 @@ app.get('/api/todos/:id', [authJwt.verifyToken,authJwt.isExist],async (req, res)
         const todoJson = JSON.stringify(todo);
         const hash = etag(todoJson);
         if (req.headers['if-none-match'] === hash) {
-          return res.status(304).send(); // Pas de modifications, renvoyer 304 Not Modified
+          return res.status(304).send(); 
         }
         res.setHeader('ETag', hash);
         res.status(200).json(todo);
@@ -51,7 +53,7 @@ app.get('/api/todos/:id', [authJwt.verifyToken,authJwt.isExist],async (req, res)
     }
     
 });
-app.put('/api/todos/:id',[authJwt.verifyToken,authJwt.CheckUser], async (req, res) => {
+app.put('/api/todos/:id',[authJwt.verifyToken,authJwt.CheckUser, rateLimit], async (req, res) => {
     const todo = await Todo.findById(req.params.id);
     if (!todo) {
         return res.status(404).send('Tâche non trouvée');
@@ -61,7 +63,7 @@ app.put('/api/todos/:id',[authJwt.verifyToken,authJwt.CheckUser], async (req, re
     console.log(clientETag);
     console.log(currentETag);
     if (clientETag !== currentETag) {
-        return res.status(412).send('Precondition Failed: ETag mismatch'); // 412 Precondition Failed
+        return res.status(412).send('Precondition Failed: ETag mismatch'); 
     }
     todo.title = req.body.title || todo.title;
     todo.completed = req.body.completed || todo.completed;
